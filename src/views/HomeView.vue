@@ -18,9 +18,12 @@
 
 
       <el-table :data="tableData" stripe style="width: 100%">
-        <el-table-column prop="date" label="日期"></el-table-column>
-        <el-table-column prop="name" label="姓名"></el-table-column>
-        <el-table-column prop="address" label="地址"></el-table-column>
+        <el-table-column prop="id" label="ID"></el-table-column>
+        <el-table-column prop="name" label="名称"></el-table-column>
+        <el-table-column prop="maker" label="制造商"></el-table-column>
+        <el-table-column prop="price" label="价格"></el-table-column>
+        <el-table-column prop="sales" label="销量"></el-table-column>
+        <el-table-column prop="stock" label="库存"></el-table-column>
 
         <el-table-column fixed="right" label="操作" width="100">
           <template #default="scope">
@@ -84,25 +87,34 @@ export default {
       form: {},
       dialogVisible: false,
       search: '',
-      tableData: [{
-        date: '2016-05-02',
-        name: '王小虎',
-        address: '上海市普陀区金沙江路 1518 弄',
-      },
-        {
-          date: '2016-05-02',
-          name: '王小虎',
-          address: '上海市普陀区金沙江路 1518 弄',
-        },
-        {
-          date: '2016-05-02',
-          name: '王小虎',
-          address: '上海市普陀区金沙江路 1518 弄',
-        }
-      ]
+      tableData: []
     }
   },
+  created() {
+    this.list();
+  },
   methods: {
+    list() {    //完成显示所有家具信息
+      request.get(
+          "/api/list"
+      ).then(res => {
+        console.log("刷新数据:" + res)
+        this.tableData = res.data;
+        if (res.code === "200") {
+          ElMessage({
+            message: '刷新成功',
+            type: 'success',
+            plain: true,
+          })
+        } else {
+          ElMessage({
+            message: '刷新失败!',
+            type: "error",
+            plain: false,
+          })
+        }
+      })
+    },
     add() {
       this.dialogVisible = true;
       this.form = {}; //清空表单信息
@@ -115,7 +127,7 @@ export default {
           this.form
       ).then(res => {
         console.log(res);
-        if (res.data.code === "200") {
+        if (res.code === "200") {
           ElMessage({
             message: 'Save Successfully!',
             type: 'success',
@@ -129,6 +141,7 @@ export default {
           })
         }
         this.dialogVisible = false
+        this.list();  // 每次添加完数据之后刷新请求最新数据
       })
     }
   }

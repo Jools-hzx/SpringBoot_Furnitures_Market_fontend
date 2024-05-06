@@ -17,5 +17,22 @@ request.interceptors.request.use(
     }
 );
 
+request.interceptors.response.use(
+    response => {
+        let res = response.data;    //取出并且返回 data 的内容
+        //如果返回的是文件
+        if (response.config.responseType === 'blob') {
+            return res;
+        }
+        //如果返回得是 String,就转换成 json 对象
+        if (typeof res === "string") {
+            res = res ? JSON.parse(res) : res;
+        }
+        return res;
+    }, error => {
+        return Promise.reject();
+    }
+)
+
 //导出
 export default request;
