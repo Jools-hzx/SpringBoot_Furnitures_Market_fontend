@@ -73,6 +73,26 @@
          </span>
       </template>
     </el-dialog>
+
+    <!--
+      1. 在 dialog 之后,加分页导航条
+      2. 当修改每页显示几条记录就会触发 handlePageSizeChange
+      3. 点击分页，触发 handleCurrentChange 方法
+      4. 需要绑定的变量
+          currentPage
+          pageSize total
+    -->
+    <div style="margin: 10px 0">
+      <el-pagination
+          @size-change="handlePageSizeChange"
+          @current-change="handleCurrentChange"
+          :current-page="currentPage"
+          :page-sizes="[5,10]"
+          :page-size="pageSize"
+          background layout="total, sizes, prev, pager, next, jumper"
+          :total="total">
+      </el-pagination>
+    </div>
   </div>
 </template>
 
@@ -92,32 +112,40 @@ export default {
       form: {},
       dialogVisible: false,
       search: '',
-      tableData: []
+      tableData: [],
+      pageSize: 5,
+      currentPage: 1,
+      total: 10
     }
   },
   created() {
-    this.list();
+    this.list();  //更新请求分页
   },
   methods: {
+    //页面容量发生了改变
+    handlePageSizeChange(pageSize) {
+      this.pageSize = pageSize;
+      this.list();
+    },
+    //当前页码发生了改变
+    handleCurrentChange(currentPage) {
+      this.currentPage = currentPage;
+      this.list();
+    },
     list() {    //完成显示所有家具信息
       request.get(
-          "/api/list"
+          "/api/listByPage",
+          {
+            params: {
+              currentPage: this.currentPage,
+              pageSize: this.pageSize
+            }
+          }
       ).then(res => {
-        console.log("刷新数据:" + res)
-        this.tableData = res.data;
-        if (res.code === "200") {
-          //   ElMessage({
-          //     message: '刷新成功',
-          //     type: 'success',
-          //     plain: true,
-          //   })
-          // } else {
-          //   ElMessage({
-          //     message: '刷新失败!',
-          //     type: "error",
-          //     plain: false,
-          //   })
-        }
+        // console.log(res);
+        //更新分页数据
+        this.total = res.data.total;
+        this.tableData = res.data.records;
       })
     },
     add() {
