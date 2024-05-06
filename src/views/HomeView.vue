@@ -25,11 +25,15 @@
         <el-table-column prop="sales" label="销量"></el-table-column>
         <el-table-column prop="stock" label="库存"></el-table-column>
 
-        <el-table-column fixed="right" label="操作" width="100">
+        <el-table-column fixed="right" label="操作" width="140">
           <template #default="scope">
             <!--      传递当前行的数据到函数   -->
-            <el-button @click="handleEdit(scope.row)" type="text">编辑</el-button>
-            <el-button type="text">删除</el-button>
+            <el-button @click="handleEdit(scope.row)" type="primary" size="small">编辑</el-button>
+            <el-popconfirm title="Are you sure to delete this?" @confirm="handleDel(scope.row)">
+              <template #reference>
+                <el-button type="danger" size="small">删除</el-button>
+              </template>
+            </el-popconfirm>
           </template>
         </el-table-column>
       </el-table>
@@ -119,6 +123,35 @@ export default {
     add() {
       this.dialogVisible = true;
       this.form = {}; //每次请求添加则清空表单信息
+    },
+    handleDel(row) {
+      console.log("待删除的家具id:", row.id);
+      request.delete(
+          "/api/delById",
+          {
+            params: {
+              id: row.id
+            }
+          }
+      ).then(res => {
+            console.log(res);
+            if (res.code === "200") {
+              ElMessage({
+                message: 'Delete Successfully!',
+                type: 'success',
+                plain: true,
+              })
+            } else {
+              ElMessage({
+                message: 'Delete Fail!',
+                type: "error",
+                plain: false,
+              })
+            }
+            //重新请求待刷新的数据
+            this.list();
+          }
+      )
     },
     handleEdit(row) {  //完成更新操作
       console.log("id:", row.id);
