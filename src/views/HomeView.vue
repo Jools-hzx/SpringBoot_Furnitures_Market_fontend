@@ -15,6 +15,7 @@
                 placeholder=" 请 输 入 关 键 字 "
                 style="width:30%">
       </el-input>
+      <el-button type="primary" @click="list">查询</el-button>
 
 
       <el-table :data="tableData" stripe style="width: 100%">
@@ -49,20 +50,25 @@
       后台Javabean 属性一致
     -->
     <el-dialog title="提示" v-model="dialogVisible" width="30%">
-      <el-form :model="form" label-width="120px">
-        <el-form-item label="家居名">
+      <!--
+        1.指定将创建的规则应用到 form 这个表单
+        2.并指定各个字段规则和哪个 el-form-item 关联,通过 prop 指定
+        3.一定要注意 prop 和各个规则名相对应，否则不生效
+      -->
+      <el-form :model="form" label-width="120px" :rules="rules" ref="form">
+        <el-form-item label="家居名" prop="name">
           <el-input v-model="form.name" style="width: 80%"></el-input>
         </el-form-item>
-        <el-form-item label="厂商">
+        <el-form-item label="厂商" prop="maker">
           <el-input v-model="form.maker" style="width: 80%"></el-input>
         </el-form-item>
-        <el-form-item label="价格">
+        <el-form-item label="价格" prop="price">
           <el-input v-model="form.price" style="width: 80%"></el-input>
         </el-form-item>
-        <el-form-item label="销量">
+        <el-form-item label="销量" prop="sales">
           <el-input v-model="form.sales" style="width: 80%"></el-input>
         </el-form-item>
-        <el-form-item label="库存">
+        <el-form-item label="库存" prop="stock">
           <el-input v-model="form.stock" style="width: 80%"></el-input>
         </el-form-item>
       </el-form>
@@ -112,10 +118,29 @@ export default {
       form: {},
       dialogVisible: false,
       search: '',
-      tableData: [],
-      pageSize: 5,
-      currentPage: 1,
-      total: 10
+      tableData: [],  //存储查询得到的数据
+      pageSize: 5,    //当前页面容量
+      currentPage: 1, //当前页码
+      total: 10,   //总数据量
+      rules: {    //表单校验规则
+        name: [
+          {required: true, message: '请输入称家居名', trigger: 'blur'}
+        ],
+        maker: [
+          {required: true, message: '请输入称制造商', trigger: 'blur'}
+        ],
+        price: [
+          {required: true, message: '请输入价格', trigger: 'blur'},
+        ],
+        sales: [
+          {required: true, message: '请输入销量', trigger: 'blur'},
+          {pattern: /^(([1-9]\d*)|(0))(\.\d+)?$/, message: '请输入数字', trigger: 'blur'}
+        ],
+        stock: [
+          {required: true, message: '请输入库存', trigger: 'blur'},
+          {pattern: /^(([1-9]\d*)|(0))$/, message: '请输入数字', trigger: 'blur'}
+        ]
+      }
     }
   },
   created() {
@@ -138,7 +163,8 @@ export default {
           {
             params: {
               currentPage: this.currentPage,
-              pageSize: this.pageSize
+              pageSize: this.pageSize,
+              search: this.search
             }
           }
       ).then(res => {
@@ -151,6 +177,7 @@ export default {
     add() {
       this.dialogVisible = true;
       this.form = {}; //每次请求添加则清空表单信息
+      this.$refs['form'].resetFields(); //将上传验证的消息清空
     },
     handleDel(row) {
       console.log("待删除的家具id:", row.id);
@@ -200,53 +227,64 @@ export default {
       })
     },
     save() {
-      //如果当前打开对话中的 form 存在 id 说明是更新操作
-      if (this.form.id != null) {
-        request.put(
-            "/api/update",
-            this.form
-        ).then(res => {
-          console.log(res);
-          if (res.code === "200") {
-            ElMessage({
-              message: 'Update Successfully!',
-              type: 'success',
-              plain: true,
+      //如果表单数据校验成功
+      this.$refs['form'].validate((valid) => {
+        if (valid) {
+          //如果当前打开对话中的 form 存在 id 说明是更新操作
+          if (this.form.id != null) {
+            request.put(
+                "/api/update",
+                this.form
+            ).then(res => {
+              console.log(res);
+              if (res.code === "200") {
+                ElMessage({
+                  message: 'Update Successfully!',
+                  type: 'success',
+                  plain: true,
+                })
+              } else {
+                ElMessage({
+                  message: 'Update Fail!',
+                  type: "error",
+                  plain: false,
+                })
+              }
+              this.dialogVisible = false
+              this.list();  // 每次添加完数据之后刷新请求最新数据
             })
           } else {
-            ElMessage({
-              message: 'Update Fail!',
-              type: "error",
-              plain: false,
+            //如果不存在 id 说明是添加操作
+            request.post(
+                "/api/save",
+                this.form
+            ).then(res => {
+              console.log(res);
+              if (res.code === "200") {
+                ElMessage({
+                  message: 'Save Successfully!',
+                  type: 'success',
+                  plain: true,
+                })
+              } else {
+                ElMessage({
+                  message: 'Fail!',
+                  type: "error",
+                  plain: false,
+                })
+              }
+              this.dialogVisible = false
+              this.list();  // 每次添加完数据之后刷新请求最新数据
             })
           }
-          this.dialogVisible = false
-          this.list();  // 每次添加完数据之后刷新请求最新数据
-        })
-      } else {
-        //如果不存在 id 说明是添加操作
-        request.post(
-            "/api/save",
-            this.form
-        ).then(res => {
-          console.log(res);
-          if (res.code === "200") {
-            ElMessage({
-              message: 'Save Successfully!',
-              type: 'success',
-              plain: true,
-            })
-          } else {
-            ElMessage({
-              message: 'Fail!',
-              type: "error",
-              plain: false,
-            })
-          }
-          this.dialogVisible = false
-          this.list();  // 每次添加完数据之后刷新请求最新数据
-        })
-      }
+        } else {
+          ElMessage({
+            message: '验证失败,禁止提交',
+            type: "error",
+            plain: false,
+          })
+        }
+      })
     }
   }
 }
