@@ -4,7 +4,7 @@
     <!--    <HelloWorld msg="Welcome to Your Vue.js App"/>-->
     <!--    <el-button type="primary"> My Home View Button</el-button>-->
     <div style="margin: 10px 0">
-      <el-button type="primary">新增</el-button>
+      <el-button type="primary" @click="add()">新增</el-button>
       <el-button>其它</el-button>
     </div>
 
@@ -30,10 +30,49 @@
         </el-table-column>
       </el-table>
     </div>
+
+    <!--
+    添加家具的弹窗
+    说明:
+    1. el-dialog ：v-model="dialogVisible" 表示对话框, 和 dialogVisible 变量双向
+      绑定,控制是否显示对话框
+    2. el-form :model="form" 表示表单数据和 form数据变量双向绑定
+    3. el-input v-model="form.name" 表示表单的 input 控件，名字为name 需要和
+      后台Javabean 属性一致
+    -->
+    <el-dialog title="提示" v-model="dialogVisible" width="30%">
+      <el-form :model="form" label-width="120px">
+        <el-form-item label="家居名">
+          <el-input v-model="form.name" style="width: 80%"></el-input>
+        </el-form-item>
+        <el-form-item label="厂商">
+          <el-input v-model="form.maker" style="width: 80%"></el-input>
+        </el-form-item>
+        <el-form-item label="价格">
+          <el-input v-model="form.price" style="width: 80%"></el-input>
+        </el-form-item>
+        <el-form-item label="销量">
+          <el-input v-model="form.sales" style="width: 80%"></el-input>
+        </el-form-item>
+        <el-form-item label="库存">
+          <el-input v-model="form.stock" style="width: 80%"></el-input>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+         <span class="dialog-footer">
+           <el-button @click="dialogVisible = false">取 消</el-button>
+           <el-button type="primary" @click="save">确 定</el-button>
+         </span>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
+
 <script>
+
+import request from "@/utils/request"
+import {ElMessage} from "element-plus";
 
 export default {
   name: 'HomeView',
@@ -42,6 +81,8 @@ export default {
   },
   data() {
     return {
+      form: {},
+      dialogVisible: false,
       search: '',
       tableData: [{
         date: '2016-05-02',
@@ -62,7 +103,33 @@ export default {
     }
   },
   methods: {
+    add() {
+      this.dialogVisible = true;
+      this.form = {}; //清空表单信息
+    },
     handleEdit() {
+    },
+    save() {
+      request.post(
+          "/api/save",
+          this.form
+      ).then(res => {
+        console.log(res);
+        if (res.data.code === "200") {
+          ElMessage({
+            message: 'Save Successfully!',
+            type: 'success',
+            plain: true,
+          })
+        } else {
+          ElMessage({
+            message: 'Fail!',
+            type: "error",
+            plain: false,
+          })
+        }
+        this.dialogVisible = false
+      })
     }
   }
 }
