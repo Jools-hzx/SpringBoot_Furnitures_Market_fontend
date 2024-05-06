@@ -58,18 +58,23 @@
       <el-form :model="form" label-width="120px" :rules="rules" ref="form">
         <el-form-item label="家居名" prop="name">
           <el-input v-model="form.name" style="width: 80%"></el-input>
+          {{ validMsg.name }}
         </el-form-item>
         <el-form-item label="厂商" prop="maker">
           <el-input v-model="form.maker" style="width: 80%"></el-input>
+          {{ validMsg.maker }}
         </el-form-item>
         <el-form-item label="价格" prop="price">
           <el-input v-model="form.price" style="width: 80%"></el-input>
+          {{ validMsg.price }}
         </el-form-item>
         <el-form-item label="销量" prop="sales">
           <el-input v-model="form.sales" style="width: 80%"></el-input>
+          {{ validMsg.sales }}
         </el-form-item>
         <el-form-item label="库存" prop="stock">
           <el-input v-model="form.stock" style="width: 80%"></el-input>
+          {{ validMsg.stock }}
         </el-form-item>
       </el-form>
       <template #footer>
@@ -122,6 +127,7 @@ export default {
       pageSize: 5,    //当前页面容量
       currentPage: 1, //当前页码
       total: 10,   //总数据量
+      validMsg: {},
       rules: {    //表单校验规则
         name: [
           {required: true, message: '请输入称家居名', trigger: 'blur'}
@@ -175,6 +181,7 @@ export default {
       })
     },
     add() {
+      this.validMsg = {}; //每次打开对话框清空验证警告
       this.dialogVisible = true;
       this.form = {}; //每次请求添加则清空表单信息
       this.$refs['form'].resetFields(); //将上传验证的消息清空
@@ -229,6 +236,10 @@ export default {
     save() {
       //如果表单数据校验成功
       this.$refs['form'].validate((valid) => {
+
+        //临时测试;设置为 true
+        // valid = true;
+
         if (valid) {
           //如果当前打开对话中的 form 存在 id 说明是更新操作
           if (this.form.id != null) {
@@ -266,14 +277,19 @@ export default {
                   type: 'success',
                   plain: true,
                 })
+                this.dialogVisible = false
               } else {
                 ElMessage({
                   message: 'Fail!',
                   type: "error",
                   plain: false,
-                })
+                });
+                this.validMsg.name = res.data.name
+                this.validMsg.sales = res.data.sales
+                this.validMsg.price = res.data.price
+                this.validMsg.maker = res.data.maker
+                this.validMsg.stock = res.data.stock
               }
-              this.dialogVisible = false
               this.list();  // 每次添加完数据之后刷新请求最新数据
             })
           }
