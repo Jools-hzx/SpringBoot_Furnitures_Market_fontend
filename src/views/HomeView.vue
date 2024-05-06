@@ -27,6 +27,7 @@
 
         <el-table-column fixed="right" label="操作" width="100">
           <template #default="scope">
+            <!--      传递当前行的数据到函数   -->
             <el-button @click="handleEdit(scope.row)" type="text">编辑</el-button>
             <el-button type="text">删除</el-button>
           </template>
@@ -101,48 +102,90 @@ export default {
         console.log("刷新数据:" + res)
         this.tableData = res.data;
         if (res.code === "200") {
-          ElMessage({
-            message: '刷新成功',
-            type: 'success',
-            plain: true,
-          })
-        } else {
-          ElMessage({
-            message: '刷新失败!',
-            type: "error",
-            plain: false,
-          })
+          //   ElMessage({
+          //     message: '刷新成功',
+          //     type: 'success',
+          //     plain: true,
+          //   })
+          // } else {
+          //   ElMessage({
+          //     message: '刷新失败!',
+          //     type: "error",
+          //     plain: false,
+          //   })
         }
       })
     },
     add() {
       this.dialogVisible = true;
-      this.form = {}; //清空表单信息
+      this.form = {}; //每次请求添加则清空表单信息
     },
-    handleEdit() {
+    handleEdit(row) {  //完成更新操作
+      console.log("id:", row.id);
+      this.form = {}; //每次请求添加则清空表单信息
+      //打开对话框
+      this.dialogVisible = true;
+      //向后端发送请求，通过 id 查询数据库返回该记录的最新数据
+      request.get(
+          "/api/findById",
+          {
+            params: {
+              id: row.id
+            }
+          }
+      ).then(res => {
+        // console.log(res);
+        this.form = res.data;
+      })
     },
     save() {
-      request.post(
-          "/api/save",
-          this.form
-      ).then(res => {
-        console.log(res);
-        if (res.code === "200") {
-          ElMessage({
-            message: 'Save Successfully!',
-            type: 'success',
-            plain: true,
-          })
-        } else {
-          ElMessage({
-            message: 'Fail!',
-            type: "error",
-            plain: false,
-          })
-        }
-        this.dialogVisible = false
-        this.list();  // 每次添加完数据之后刷新请求最新数据
-      })
+      //如果当前打开对话中的 form 存在 id 说明是更新操作
+      if (this.form.id != null) {
+        request.put(
+            "/api/update",
+            this.form
+        ).then(res => {
+          console.log(res);
+          if (res.code === "200") {
+            ElMessage({
+              message: 'Update Successfully!',
+              type: 'success',
+              plain: true,
+            })
+          } else {
+            ElMessage({
+              message: 'Update Fail!',
+              type: "error",
+              plain: false,
+            })
+          }
+          this.dialogVisible = false
+          this.list();  // 每次添加完数据之后刷新请求最新数据
+        })
+      } else {
+        //如果不存在 id 说明是添加操作
+        request.post(
+            "/api/save",
+            this.form
+        ).then(res => {
+          console.log(res);
+          if (res.code === "200") {
+            ElMessage({
+              message: 'Save Successfully!',
+              type: 'success',
+              plain: true,
+            })
+          } else {
+            ElMessage({
+              message: 'Fail!',
+              type: "error",
+              plain: false,
+            })
+          }
+          this.dialogVisible = false
+          this.list();  // 每次添加完数据之后刷新请求最新数据
+        })
+      }
     }
   }
 }
